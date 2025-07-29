@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String?   @map("password_hash")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  oauthProviders OAuthProvider[]
+  sessions       Session[]
+  teams          Team[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model OAuthProvider {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  provider       String   // 'google' | 'github'
+  providerUserId String   @map("provider_user_id")
+  accessToken    String?  @map("access_token")
+  refreshToken   String?  @map("refresh_token")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@index([provider, providerUserId])
+  @@map("oauth_providers")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Team {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  name            String
+  budgetRemaining Decimal  @default(100.00) @map("budget_remaining") @db.Decimal(5, 2)
+  formation       String?
+  isValid         Boolean  @default(false) @map("is_valid")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  players TeamPlayer[]
+
+  @@index([userId])
+  @@map("teams")
+}
+
+model TeamPlayer {
+  id            String   @id @default(uuid())
+  teamId        String   @map("team_id")
+  playerId      String   @map("player_id") // References Snowflake data
+  clubId        String   @map("club_id") // For enforcing max 3 per club rule
+  position      String   // 'GK' | 'DEF' | 'MID' | 'FWD'
+  squadPosition Int      @map("squad_position") // 1-11 starting, 12-15 bench
+  isCaptain     Boolean  @default(false) @map("is_captain")
+  isViceCaptain Boolean  @default(false) @map("is_vice_captain")
+  purchasePrice Decimal  @map("purchase_price") @db.Decimal(5, 2)
+  addedAt       DateTime @default(now()) @map("added_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, playerId])
+  @@unique([teamId, squadPosition])
+  @@index([teamId])
+  @@index([playerId])
+  @@index([teamId, clubId])
+  @@map("team_players")
+}
