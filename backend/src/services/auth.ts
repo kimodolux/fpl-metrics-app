@@ -1,12 +1,12 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { prisma } from '@/lib/prisma';
-import { RegisterInput, LoginInput } from '@/schemas/auth';
+import bcrypt from "bcrypt";
+import jwt, { SignOptions } from "jsonwebtoken";
+import { prisma } from "@/lib/prisma";
+import { RegisterInput, LoginInput } from "@/schemas/auth";
 
 export class AuthService {
   private static readonly SALT_ROUNDS = 12;
-  private static readonly JWT_EXPIRES_IN = '7d';
-  private static readonly REFRESH_TOKEN_EXPIRES_IN = '30d';
+  private static readonly JWT_EXPIRES_IN = 604800; // 7 days in seconds
+  private static readonly REFRESH_TOKEN_EXPIRES_IN = 2592000; // 30 days in seconds
 
   static async register(data: RegisterInput) {
     const { email, username, password } = data;
@@ -14,15 +14,14 @@ export class AuthService {
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email },
-          { username }
-        ]
-      }
+        OR: [{ email }, { username }],
+      },
     });
 
     if (existingUser) {
-      throw new Error(existingUser.email === email ? 'EMAIL_EXISTS' : 'USERNAME_EXISTS');
+      throw new Error(
+        existingUser.email === email ? "EMAIL_EXISTS" : "USERNAME_EXISTS"
+      );
     }
 
     // Hash password
@@ -33,14 +32,14 @@ export class AuthService {
       data: {
         email,
         username,
-        passwordHash
+        passwordHash,
       },
       select: {
         id: true,
         email: true,
         username: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     // Generate tokens
@@ -53,7 +52,7 @@ export class AuthService {
       user,
       accessToken,
       refreshToken,
-      expiresIn: this.getExpiresInSeconds(this.JWT_EXPIRES_IN)
+      expiresIn: this.JWT_EXPIRES_IN,
     };
   }
 
@@ -68,33 +67,38 @@ export class AuthService {
         email: true,
         username: true,
         passwordHash: true,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     if (!user || !user.isActive) {
-      throw new Error('INVALID_CREDENTIALS');
+      throw new Error("INVALID_CREDENTIALS");
     }
 
     // Verify password
     if (!user.passwordHash) {
-      throw new Error('OAUTH_USER'); // User registered via OAuth
+      throw new Error("OAUTH_USER"); // User registered via OAuth
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error('INVALID_CREDENTIALS');
+      throw new Error("INVALID_CREDENTIALS");
     }
 
     // Update last login
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() }
+      data: { lastLoginAt: new Date() },
     });
 
     // Generate tokens
-    const expiresIn = rememberMe ? this.REFRESH_TOKEN_EXPIRES_IN : this.JWT_EXPIRES_IN;
-    const { accessToken, refreshToken } = this.generateTokens(user.id, expiresIn);
+    const expiresIn = rememberMe
+      ? this.REFRESH_TOKEN_EXPIRES_IN
+      : this.JWT_EXPIRES_IN;
+    const { accessToken, refreshToken } = this.generateTokens(
+      user.id,
+      expiresIn
+    );
 
     // Store session
     await this.createSession(user.id, refreshToken, ipAddress, userAgent);
@@ -103,11 +107,11 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        username: user.username
+        username: user.username,
       },
       accessToken,
       refreshToken: rememberMe ? refreshToken : undefined,
-      expiresIn: this.getExpiresInSeconds(expiresIn)
+      expiresIn,
     };
   }
 
@@ -115,7 +119,7 @@ export class AuthService {
     try {
       const jwtSecret = process.env.JWT_SECRET;
       if (!jwtSecret) {
-        throw new Error('JWT_SECRET not configured');
+        throw new Error("JWT_SECRET not configured");
       }
 
       const decoded = jwt.verify(refreshToken, jwtSecret) as { userId: string };
@@ -126,8 +130,8 @@ export class AuthService {
           token: refreshToken,
           userId: decoded.userId,
           expiresAt: {
-            gt: new Date()
-          }
+            gt: new Date(),
+          },
         },
         include: {
           user: {
@@ -135,14 +139,14 @@ export class AuthService {
               id: true,
               email: true,
               username: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       if (!session || !session.user.isActive) {
-        throw new Error('INVALID_REFRESH_TOKEN');
+        throw new Error("INVALID_REFRESH_TOKEN");
       }
 
       // Generate new access token
@@ -150,36 +154,47 @@ export class AuthService {
 
       return {
         accessToken,
-        expiresIn: this.getExpiresInSeconds(this.JWT_EXPIRES_IN)
+        expiresIn: this.JWT_EXPIRES_IN,
       };
     } catch (error) {
-      throw new Error('INVALID_REFRESH_TOKEN');
+      throw new Error("INVALID_REFRESH_TOKEN");
     }
   }
 
   static async logout(refreshToken: string) {
     // Delete the session
     await prisma.session.deleteMany({
-      where: { token: refreshToken }
+      where: { token: refreshToken },
     });
   }
 
-  private static generateTokens(userId: string, expiresIn = this.JWT_EXPIRES_IN) {
+  private static generateTokens(
+    userId: string,
+    expiresIn: number = this.JWT_EXPIRES_IN
+  ) {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET not configured');
+      throw new Error("JWT_SECRET not configured");
     }
 
-    const accessToken = jwt.sign({ userId }, jwtSecret, { expiresIn: this.JWT_EXPIRES_IN });
-    const refreshToken = jwt.sign({ userId }, jwtSecret, { expiresIn });
+    const accessTokenOptions: SignOptions = {
+      expiresIn: this.JWT_EXPIRES_IN,
+    };
+
+    const refreshTokenOptions: SignOptions = {
+      expiresIn,
+    };
+
+    const accessToken = jwt.sign({ userId }, jwtSecret, accessTokenOptions);
+    const refreshToken = jwt.sign({ userId }, jwtSecret, refreshTokenOptions);
 
     return { accessToken, refreshToken };
   }
 
   private static async createSession(
-    userId: string, 
-    refreshToken: string, 
-    ipAddress?: string, 
+    userId: string,
+    refreshToken: string,
+    ipAddress?: string,
     userAgent?: string
   ) {
     const expiresAt = new Date();
@@ -191,17 +206,8 @@ export class AuthService {
         token: refreshToken,
         expiresAt,
         ipAddress,
-        userAgent
-      }
+        userAgent,
+      },
     });
-  }
-
-  private static getExpiresInSeconds(duration: string): number {
-    const match = duration.match(/^(\d+)([dhm])$/);
-    if (!match) return 604800; // Default 7 days
-
-    const [, amount, unit] = match;
-    const multipliers = { d: 86400, h: 3600, m: 60 };
-    return parseInt(amount) * multipliers[unit as keyof typeof multipliers];
   }
 }

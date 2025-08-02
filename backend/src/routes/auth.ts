@@ -5,7 +5,7 @@ import {
   loginSchema,
   refreshTokenSchema,
 } from "@/schemas/auth";
-import { AuthRequest, authenticateToken } from "@/middleware/auth";
+import { authenticateToken } from "@/middleware/auth";
 import { ZodError, ZodIssue } from "zod";
 
 const router = Router();
@@ -70,6 +70,7 @@ router.post("/register", async (req, res) => {
       },
     });
   }
+  return;
 });
 
 // POST /api/v1/auth/login
@@ -125,6 +126,7 @@ router.post("/login", async (req, res) => {
       },
     });
   }
+  return;
 });
 
 // POST /api/v1/auth/refresh
@@ -168,10 +170,11 @@ router.post("/refresh", async (req, res) => {
       },
     });
   }
+  return;
 });
 
 // POST /api/v1/auth/logout
-router.post("/logout", authenticateToken, async (req: AuthRequest, res) => {
+router.post("/logout", authenticateToken, async (req, res) => {
   try {
     const refreshToken = req.body.refreshToken;
 
@@ -191,6 +194,7 @@ router.post("/logout", authenticateToken, async (req: AuthRequest, res) => {
       },
     });
   }
+  return;
 });
 
 export default router;

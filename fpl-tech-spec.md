@@ -1072,7 +1072,7 @@ services:
 
 #### Infrastructure Setup
 
-- [ ] Create project repository with .gitignore
+- [x] Create project repository with .gitignore
 - [ ] Set up Docker Compose for local development
 - [ ] Configure PostgreSQL container with initial database
 - [ ] Set up Redis container
@@ -1083,7 +1083,7 @@ services:
 
 #### Backend Foundation
 
-- [ ] Initialize Node.js/Express project with TypeScript
+- [x] Initialize Node.js/Express project with TypeScript
 - [ ] Set up Prisma ORM
 - [ ] Create database migrations for users, sessions, teams tables
 - [ ] Implement error handling middleware
