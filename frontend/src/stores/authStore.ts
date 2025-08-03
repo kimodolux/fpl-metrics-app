@@ -9,14 +9,14 @@ import {
   type ApiError,
 } from "../types/auth";
 
-interface AuthState {
+type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
 }
 
-interface AuthActions {
+type AuthActions = {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
@@ -28,7 +28,7 @@ type AuthStore = AuthState & AuthActions;
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // State
       user: null,
       isAuthenticated: false,

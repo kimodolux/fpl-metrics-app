@@ -694,7 +694,7 @@ src/
 │   └── team.service.ts        # Team API calls
 │
 └── types/
-    └── index.ts               # TypeScript interfaces
+    └── index.ts               # TypeScript types
 ```
 
 ### Key Components (MVP Focus)

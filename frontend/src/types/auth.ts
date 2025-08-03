@@ -1,4 +1,4 @@
-export interface User {
+export type User = {
   id: string;
   email: string;
   username: string;
@@ -6,26 +6,26 @@ export interface User {
   teamCount?: number;
 }
 
-export interface AuthResponse {
+export type AuthResponse = {
   user: User;
   accessToken: string;
   refreshToken?: string;
   expiresIn: number;
 }
 
-export interface LoginCredentials {
+export type LoginCredentials = {
   email: string;
   password: string;
   rememberMe?: boolean;
 }
 
-export interface RegisterCredentials {
+export type RegisterCredentials = {
   email: string;
   username: string;
   password: string;
 }
 
-export interface ApiError {
+export type ApiError = {
   error: {
     code: string;
     message: string;
