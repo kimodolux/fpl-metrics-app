@@ -41,6 +41,10 @@ build/Release
 node_modules/
 jspm_packages/
 package-lock.json
+venv
+
+# Pycache
+*__pycache__
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/

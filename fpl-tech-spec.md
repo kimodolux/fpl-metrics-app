@@ -1073,44 +1073,44 @@ services:
 #### Infrastructure Setup
 
 - [x] Create project repository with .gitignore
-- [ ] Set up Docker Compose for local development
-- [ ] Configure PostgreSQL container with initial database
+- [x] Set up Docker Compose for local development
+- [x] Configure PostgreSQL container with initial database
 - [ ] Set up Redis container
-- [ ] Create TypeScript configurations for frontend and backend
-- [ ] Set up ESLint and Prettier
+- [x] Create TypeScript configurations for frontend and backend
+- [x] Set up ESLint and Prettier
 - [ ] Configure environment variables (.env files)
 - [ ] Set up basic CI/CD pipeline (GitHub Actions/GitLab CI)
 
 #### Backend Foundation
 
 - [x] Initialize Node.js/Express project with TypeScript
-- [ ] Set up Prisma ORM
+- [x] Set up Prisma ORM
 - [ ] Create database migrations for users, sessions, teams tables
 - [ ] Implement error handling middleware
 - [ ] Set up Winston logger with Loki transport
-- [ ] Configure CORS and security middleware
-- [ ] Create health check endpoint
+- [x] Configure CORS and security middleware
+- [x] Create health check endpoint
 
 #### Authentication System
 
-- [ ] Implement user registration endpoint
-- [ ] Implement login endpoint with JWT
-- [ ] Create password hashing with bcrypt
-- [ ] Implement JWT token generation and validation
-- [ ] Create auth middleware for protected routes
+- [x] Implement user registration endpoint
+- [x] Implement login endpoint with JWT
+- [x] Create password hashing with bcrypt
+- [x] Implement JWT token generation and validation
+- [x] Create auth middleware for protected routes
 - [ ] Set up Redis session storage
-- [ ] Implement logout endpoint
-- [ ] Add input validation with Zod
+- [x] Implement logout endpoint
+- [x] Add input validation with Zod
 
 #### Frontend Foundation
 
-- [ ] Create React app with TypeScript (Vite)
-- [ ] Set up React Router
-- [ ] Configure Tailwind CSS
+- [x] Create React app with TypeScript (Vite)
+- [x] Set up React Router
+- [x] Configure Tailwind CSS
 - [ ] Create basic layout component
-- [ ] Implement Zustand auth store
-- [ ] Create login page component
-- [ ] Create registration page component
+- [x] Implement Zustand auth store
+- [x] Create login page component
+- [ ] Create registration page component (Done but need OAuth)
 - [ ] Implement protected route wrapper
 - [ ] Set up Axios with interceptors
 
