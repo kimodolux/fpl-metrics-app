@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS fpl_bootstrap_staging (
+CREATE TABLE IF NOT EXISTS STAGING_FIXTURES (
     raw_data VARIANT,
     extraction_timestamp TIMESTAMP_NTZ,
     extraction_date DATE,

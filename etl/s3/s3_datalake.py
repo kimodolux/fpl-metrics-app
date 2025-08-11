@@ -1,15 +1,44 @@
+import os
 import boto3
 import json
 import gzip
+from dataclasses import dataclass
 from datetime import datetime
+from dotenv import load_dotenv
 from zoneinfo import ZoneInfo
 from typing import Dict, Any, Optional
-from config.S3Config import S3Config
+
+@dataclass
+class S3Config:
+    """S3 configuration for data lake storage"""
+    bucket_name: str
+    region: str = 'us-east-1'
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    prefix: str = 'fpl-data'
+
+
+def generate_config():
+    load_dotenv()
+    bucket_name = os.getenv('S3_BUCKET_NAME')
+    if not bucket_name:
+        raise ValueError("S3_BUCKET_NAME environment variable is required")
+    
+    aws_region = os.getenv('AWS_REGION', 'us-east-1')
+    aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+    aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+
+    return S3Config(
+        bucket_name=bucket_name,
+        region=aws_region,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+    )
 
 
 class S3DataLake:
-    def __init__(self, config: S3Config):
-        self.config = config
+    def __init__(self):
+        self.config = generate_config()
         self.s3_client = self._create_boto3_client()
     
     def _create_boto3_client(self):
@@ -26,9 +55,8 @@ class S3DataLake:
     
     def _generate_s3_key(self, data_type: str, filename: str) -> str:
         """Generate partitioned S3 key with date partitioning"""
-        now = datetime.now(ZoneInfo("Australia/Sydney"))
+        return f"{self.config.prefix}/{data_type}/{filename}"
         
-        return f"{self.config.prefix}/{data_type}/year={now.year}/month={now.month:02d}/day={now.day:02d}/{filename}"
     
     def save_json(self, data: Dict[str, Any], data_type: str, filename: str) -> str:
         """Save JSON data to S3 with gzip compression"""

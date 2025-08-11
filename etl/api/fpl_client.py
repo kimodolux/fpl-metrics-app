@@ -49,6 +49,11 @@ class FPLAPIClient:
         url = f"{self.base_url}/element-summary/{player_id}/"
         return self.get_with_retry(url)
     
+    def get_fixtures(self) -> Optional[Dict]:
+        """Fetch fixture list for the season"""
+        url = f"{self.base_url}/fixtures/"
+        return self.get_with_retry(url)
+    
     def get_multiple_players_parallel(
             self, player_ids: List[int], 
             max_workers: int = 10
