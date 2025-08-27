@@ -42,8 +42,14 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
     
-    - name: Deploy to Lambda
+    - name: Upload package to S3
+      run: |
+        aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-$(date +%Y%m%d%H%M%S).zip
+        aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-latest.zip
+    
+    - name: Deploy to Lambda from S3
       run: |
         aws lambda update-function-code \
           --function-name fpl-etl \
-          --zip-file fileb://lambda-deployment.zip
+          --s3-bucket fpl-etl-lambda \
+          --s3-key lambda-deployment-latest.zip
