@@ -28,7 +28,18 @@ jobs:
         mkdir -p ../package
         uv pip compile pyproject.toml --output-file ../package/requirements.txt
         pip install -r ../package/requirements.txt -t ../package
-        cp -r . ../package/
+        
+        # Copy only necessary files, exclude development/test files
+        find . -name "*.py" -not -path "./.venv/*" -not -path "./tests/*" -not -name "*test*.py" -exec cp --parents {} ../package/ \;
+        
+        # Remove unnecessary files to reduce package size
+        cd ../package
+        find . -type f -name "*.pyc" -delete
+        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
+        find . -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+        find . -type f -name "*.so" -delete 2>/dev/null || true
+        find . -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
     
     - name: Create deployment package
       run: |
