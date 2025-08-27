@@ -50,6 +50,6 @@ jobs:
     - name: Deploy to Lambda from S3
       run: |
         aws lambda update-function-code \
-          --function-name fpl-etl \
+          --function-name fpl-etl-daily \
           --s3-bucket fpl-etl-lambda \
           --s3-key lambda-deployment-latest.zip
