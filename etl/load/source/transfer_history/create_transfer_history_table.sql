@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS SOURCE_TRANSFER_HISTORY (
+    player_id INTEGER,
+    date DATE,
+    now_cost INTEGER,
+    cost_change_event INTEGER,
+    cost_change_event_fall INTEGER,
+    cost_change_start INTEGER,
+    cost_change_start_fall INTEGER,
+    transfers_in INTEGER,
+    transfers_out INTEGER,
+    transfers_in_event INTEGER,
+    transfers_out_event INTEGER,
+    selected_by_percent FLOAT,
+    total_ownership INTEGER,
+    total_players INTEGER,
+    value_form FLOAT,
+    value_season FLOAT,
+    extraction_timestamp TIMESTAMP_NTZ,
+    extraction_date DATE,
+    PRIMARY KEY (player_id, extraction_date)
+);

@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS SOURCE_PLAYER_FIXTURES (
+    fixture_id INTEGER,
+    event INTEGER,
+    opponent_team INTEGER,
+    opponent_team_name STRING,
+    opponent_team_short_name STRING,
+    is_home BOOLEAN,
+    difficulty INTEGER,
+    kickoff_time TIMESTAMP_NTZ,
+    team_h INTEGER,
+    team_a INTEGER,
+    team_h_score INTEGER,
+    team_a_score INTEGER,
+    finished BOOLEAN,
+    minutes INTEGER,
+    provisional_start_time BOOLEAN,
+    finished_provisional BOOLEAN,
+    event_name STRING,
+    player_id INTEGER,
+    extraction_timestamp TIMESTAMP_NTZ,
+    extraction_date DATE,
+    PRIMARY KEY (fixture_id, player_id)
+);

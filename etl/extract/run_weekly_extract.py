@@ -7,11 +7,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from s3.s3_datalake import S3DataLake
 from api.fpl_client import FPLAPIClient
-from player_details.pipeline import PlayerDetailsETLPipelineExtract
-from fixtures.pipeline import FixturesETLPipelineExtract
-from bootstrap.pipeline import BootstrapETLPipelineExtract
+from extract.player_details.pipeline import PlayerDetailsETLPipelineExtract
+from extract.fixtures.pipeline import FixturesETLPipelineExtract
+from extract.bootstrap.pipeline import BootstrapETLPipelineExtract
 
-def run_all_extract_pipelines():
+def run_weekly_extract_pipelines():
     """Run all extract pipelines in sequence."""
     
     # Configure logging
@@ -87,4 +87,4 @@ def run_all_extract_pipelines():
 
 
 if __name__ == "__main__":
-    run_all_extract_pipelines()
+    run_weekly_extract_pipelines()

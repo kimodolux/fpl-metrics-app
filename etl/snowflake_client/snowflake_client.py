@@ -1,4 +1,5 @@
 import snowflake.connector
+import boto3
 import logging
 import os
 from dataclasses import dataclass
@@ -18,26 +19,47 @@ class SnowflakeConfig:
     database: str
     schema: str
 
+def get_secret(parameter_name):
+    ssm = boto3.client('ssm')
+    response = ssm.get_parameter(
+        Name=parameter_name,
+        WithDecryption=True
+    )
+    return response['Parameter']['Value']
+
 class SnowflakeClient:
     """Generic Snowflake client for executing SQL and managing connections"""
     
     def __init__(self):
-        self.connection = self._create_connection()
+        self.connection = self._create_connection("prd")
     
-    def _create_connection(self):
+    def _create_connection(self, env):
         """Create Snowflake connection using configuration"""
+        if env == 'prd':
+            connection_params = {
+                'account': get_secret("SNOWFLAKE_ACCOUNT"),
+                'user': get_secret("SNOWFLAKE_USER"),
+                'password': get_secret("SNOWFLAKE_PASSWORD"),
+                'warehouse': get_secret("SNOWFLAKE_WAREHOUSE"),
+                'database': get_secret("SNOWFLAKE_DATABASE"),
+                'schema': get_secret("SNOWFLAKE_SCHEMA"),
+                'role': get_secret("SNOWFLAKE_ROLE"),
+            }   
+            return snowflake.connector.connect(**connection_params)
 
-        load_dotenv()
-        connection_params = {
-            'account': os.getenv("SNOWFLAKE_ACCOUNT"),
-            'user': os.getenv("SNOWFLAKE_USER"),
-            'password': os.getenv("SNOWFLAKE_PASSWORD"),
-            'warehouse': os.getenv("SNOWFLAKE_WAREHOUSE"),
-            'database': os.getenv("SNOWFLAKE_DATABASE"),
-            'schema': os.getenv("SNOWFLAKE_SCHEMA"),
-            'role': os.getenv("SNOWFLAKE_ROLE"),
-        }   
-        return snowflake.connector.connect(**connection_params)
+        else:
+
+            load_dotenv()
+            connection_params = {
+                'account': os.getenv("SNOWFLAKE_ACCOUNT"),
+                'user': os.getenv("SNOWFLAKE_USER"),
+                'password': os.getenv("SNOWFLAKE_PASSWORD"),
+                'warehouse': os.getenv("SNOWFLAKE_WAREHOUSE"),
+                'database': os.getenv("SNOWFLAKE_DATABASE"),
+                'schema': os.getenv("SNOWFLAKE_SCHEMA"),
+                'role': os.getenv("SNOWFLAKE_ROLE"),
+            }   
+            return snowflake.connector.connect(**connection_params)
     
     def execute_sql(self, sql: str, params: Optional[tuple] = None) -> Optional[Any]:
         """Execute SQL and return results"""

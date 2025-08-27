@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any
 # Add the etl directory to Python path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from load.snowflake_client import SnowflakeClient
+from snowflake_client.snowflake_client import SnowflakeClient
 from s3.s3_datalake import generate_config
 
 logger = logging.getLogger(__name__)

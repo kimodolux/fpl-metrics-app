@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def run_all_load_pipelines():
+def run_weekly_load_pipelines():
     """Run all load pipelines in sequence."""
     logger.info("Starting bootstrap staging pipeline...")
     
@@ -42,7 +42,6 @@ def run_all_load_pipelines():
         logger.error(f"❌ Fixtures staging pipeline failed with exception: {e}")
         raise
         
-
     try:
         result = run_player_details_staging()
         if result.get("success", False):
@@ -57,4 +56,4 @@ def run_all_load_pipelines():
 
 
 if __name__ == "__main__":
-    run_all_load_pipelines()
+    run_weekly_load_pipelines()
