@@ -58,9 +58,16 @@ jobs:
         aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-$(date +%Y%m%d%H%M%S).zip
         aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-latest.zip
     
-    - name: Deploy to Lambda from S3
+    - name: Deploy to Lambda functions from S3
       run: |
+        # Deploy to daily Lambda function
         aws lambda update-function-code \
           --function-name fpl-etl-daily \
+          --s3-bucket fpl-etl-lambda \
+          --s3-key lambda-deployment-latest.zip
+        
+        # Deploy to weekly Lambda function  
+        aws lambda update-function-code \
+          --function-name fpl-etl-weekly \
           --s3-bucket fpl-etl-lambda \
           --s3-key lambda-deployment-latest.zip

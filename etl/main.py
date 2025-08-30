@@ -3,7 +3,8 @@ import os
 import sys
 import argparse
 import logging
-from typing import Dict, Any
+import json
+from typing import Dict, Any, Optional
 
 # Add the etl directory to Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -119,6 +120,87 @@ def run_pipeline(schedule: str, phase: str) -> int:
     
     logger.info(f"All phases completed successfully for {schedule} schedule")
     return 0
+
+
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    AWS Lambda handler for EventBridge scheduled events.
+    
+    Expected event structure from EventBridge:
+    {
+        "detail": {
+            "schedule": "daily" | "weekly",
+            "phase": "extract" | "source" | "stage" | "all"
+        }
+    }
+    """
+    # Setup logging for Lambda
+    setup_logging("INFO")
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"Lambda handler invoked with event: {json.dumps(event, indent=2)}")
+        
+        # Extract parameters from EventBridge event
+        detail = event.get("detail", {})
+        schedule = detail.get("schedule")
+        phase = detail.get("phase", "all")
+        
+        if not schedule:
+            error_msg = "Missing 'schedule' parameter in event detail"
+            logger.error(error_msg)
+            return {
+                "statusCode": 400,
+                "success": False,
+                "error": error_msg
+            }
+        
+        if schedule not in ["daily", "weekly"]:
+            error_msg = f"Invalid schedule '{schedule}'. Must be 'daily' or 'weekly'"
+            logger.error(error_msg)
+            return {
+                "statusCode": 400,
+                "success": False,
+                "error": error_msg
+            }
+        
+        if phase not in ["extract", "source", "stage", "all"]:
+            error_msg = f"Invalid phase '{phase}'. Must be one of: extract, source, stage, all"
+            logger.error(error_msg)
+            return {
+                "statusCode": 400,
+                "success": False,
+                "error": error_msg
+            }
+        
+        logger.info(f"Starting FPL ETL Pipeline via Lambda - Schedule: {schedule}, Phase: {phase}")
+        
+        # Run the pipeline
+        exit_code = run_pipeline(schedule, phase)
+        
+        if exit_code == 0:
+            logger.info("Pipeline completed successfully")
+            return {
+                "statusCode": 200,
+                "success": True,
+                "message": f"Pipeline completed successfully for schedule '{schedule}' and phase '{phase}'"
+            }
+        else:
+            logger.error("Pipeline failed")
+            return {
+                "statusCode": 500,
+                "success": False,
+                "error": f"Pipeline failed for schedule '{schedule}' and phase '{phase}'"
+            }
+            
+    except Exception as e:
+        error_msg = f"Lambda handler error: {str(e)}"
+        logger.error(error_msg, exc_info=True)
+        return {
+            "statusCode": 500,
+            "success": False,
+            "error": error_msg
+        }
 
 
 def main() -> int:
