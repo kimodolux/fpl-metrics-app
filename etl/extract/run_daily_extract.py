@@ -17,7 +17,7 @@ def run_daily_extract_pipelines():
     # Configure logging
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
-    logger.info("Starting extract staging pipeline...")
+    logger.info("[PIPELINE_START] DAILY EXTRACT - Starting extract staging pipeline")
 
     s3_client = S3DataLake()
     api_client = FPLAPIClient(
@@ -30,17 +30,14 @@ def run_daily_extract_pipelines():
         pipeline = BootstrapETLPipelineExtract(api_client=api_client, s3_client=s3_client)
         result = pipeline.run()
         if result["success"]:
-            logger.info(f"Bootstrap ETL completed successfully!")
-            logger.info(f"Players processed: {result['players_count']}")
-            logger.info(f"Teams processed: {result['teams_count']}")
-            logger.info(f"Gameweeks processed: {result['gameweeks_count']}")
-            logger.info(f"S3 path: {result['s3_path']}")
-            logger.info(f"Extraction timestamp: {result['extraction_timestamp']}")
-            sys.exit(0)
+            logger.info(f"[PIPELINE_COMPLETE] BOOTSTRAP EXTRACT - Completed successfully - Players: {result['players_count']}, Teams: {result['teams_count']}, Gameweeks: {result['gameweeks_count']}")
+            logger.info(f"[STEP_COMPLETE] BOOTSTRAP EXTRACT - S3 upload - Path: {result['s3_path']}")
+            logger.info(f"[STEP_COMPLETE] BOOTSTRAP EXTRACT - Extraction timestamp: {result['extraction_timestamp']}")
+            return result
         else:
-            logger.error(f"Bootstrap ETL failed: {result['error']}")
-            sys.exit(1)
-            
+            logger.error(f"[PIPELINE_FAILED] BOOTSTRAP EXTRACT - {result['error']}")
+            raise Exception(f"Bootstrap extract failed: {result['error']}")
+
     except Exception as e:
-        logger.error(f"Fatal error in Bootstrap ETL: {str(e)}")
-        sys.exit(1)
+        logger.error(f"[PIPELINE_FAILED] BOOTSTRAP EXTRACT - Fatal error: {str(e)}")
+        raise

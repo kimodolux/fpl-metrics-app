@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
 from typing import Dict, Any, Optional, List
+from cryptography.hazmat.primitives import serialization
 
 
 logger = logging.getLogger(__name__)
@@ -14,18 +15,32 @@ class SnowflakeConfig:
     """Snowflake configuration for data warehouse"""
     account: str
     user: str
-    password: str
     warehouse: str
     database: str
     schema: str
+    private_key_path: Optional[str] = None
+    password: Optional[str] = None
 
 def get_secret(parameter_name):
     ssm = boto3.client('ssm')
     response = ssm.get_parameter(
-        Name=parameter_name,
+        Name=f"/etl/{parameter_name}",
         WithDecryption=True
     )
     return response['Parameter']['Value']
+
+def load_private_key_from_content(private_key_content: str, passphrase: Optional[str] = None) -> bytes:
+    """Load and return the private key for Snowflake key-pair authentication from content"""
+    private_key = serialization.load_pem_private_key(
+        private_key_content.encode(),
+        password=passphrase.encode() if passphrase else None,
+    )
+    
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
 
 class SnowflakeClient:
     """Generic Snowflake client for executing SQL and managing connections"""
@@ -36,6 +51,25 @@ class SnowflakeClient:
     def _create_connection(self, env):
         """Create Snowflake connection using configuration"""
         if env == 'prd':
+            # Try key-pair authentication first, fall back to password
+            try:
+                private_key_content = get_secret("SNOWFLAKE_PRIVATE_KEY")
+                if private_key_content:
+                    private_key = load_private_key_from_content(private_key_content)
+                    connection_params = {
+                        'account': get_secret("SNOWFLAKE_ACCOUNT"),
+                        'user': get_secret("SNOWFLAKE_USER"),
+                        'private_key': private_key,
+                        'warehouse': get_secret("SNOWFLAKE_WAREHOUSE"),
+                        'database': get_secret("SNOWFLAKE_DATABASE"),
+                        'schema': get_secret("SNOWFLAKE_SCHEMA"),
+                        'role': get_secret("SNOWFLAKE_ROLE"),
+                    }
+                    return snowflake.connector.connect(**connection_params)
+            except Exception as e:
+                logger.warning(f"Key-pair authentication failed, falling back to password: {e}")
+            
+            # Fallback to password authentication
             connection_params = {
                 'account': get_secret("SNOWFLAKE_ACCOUNT"),
                 'user': get_secret("SNOWFLAKE_USER"),
@@ -48,8 +82,46 @@ class SnowflakeClient:
             return snowflake.connector.connect(**connection_params)
 
         else:
-
             load_dotenv()
+            
+            # Try key-pair authentication first for dev environment
+            try:
+                # First try to get private key content from SSM (for dev using AWS)
+                private_key_content = get_secret("SNOWFLAKE_PRIVATE_KEY")
+                if private_key_content:
+                    private_key = load_private_key_from_content(private_key_content)
+                    connection_params = {
+                        'account': os.getenv("SNOWFLAKE_ACCOUNT"),
+                        'user': os.getenv("SNOWFLAKE_USER"),
+                        'private_key': private_key,
+                        'warehouse': os.getenv("SNOWFLAKE_WAREHOUSE"),
+                        'database': os.getenv("SNOWFLAKE_DATABASE"),
+                        'schema': os.getenv("SNOWFLAKE_SCHEMA"),
+                        'role': os.getenv("SNOWFLAKE_ROLE"),
+                    }
+                    return snowflake.connector.connect(**connection_params)
+            except Exception as e:
+                logger.warning(f"Key-pair authentication from SSM failed: {e}")
+                
+            # Fallback to private key from environment variable content
+            private_key_content = os.getenv("SNOWFLAKE_PRIVATE_KEY")
+            if private_key_content:
+                try:
+                    private_key = load_private_key_from_content(private_key_content)
+                    connection_params = {
+                        'account': os.getenv("SNOWFLAKE_ACCOUNT"),
+                        'user': os.getenv("SNOWFLAKE_USER"),
+                        'private_key': private_key,
+                        'warehouse': os.getenv("SNOWFLAKE_WAREHOUSE"),
+                        'database': os.getenv("SNOWFLAKE_DATABASE"),
+                        'schema': os.getenv("SNOWFLAKE_SCHEMA"),
+                        'role': os.getenv("SNOWFLAKE_ROLE"),
+                    }
+                    return snowflake.connector.connect(**connection_params)
+                except Exception as e:
+                    logger.warning(f"Key-pair authentication from env failed: {e}")
+
+            # Fallback to password authentication
             connection_params = {
                 'account': os.getenv("SNOWFLAKE_ACCOUNT"),
                 'user': os.getenv("SNOWFLAKE_USER"),

@@ -23,7 +23,7 @@ def create_s3_stage(
         'COMPRESSION': "'GZIP'"
     }
 
-    s3config = generate_config()
+    s3config = generate_config(env="prd")
     
     format_options = file_format or default_format
     format_clause = " ".join([f"{k} = {v}" for k, v in format_options.items()])
@@ -39,11 +39,11 @@ def create_s3_stage(
     """
     
     try:
-        logger.info(f"Creating S3 stage {stage_name} for bucket {bucket_name}")
+        logger.info(f"[STEP] S3 STAGE SETUP - Creating S3 stage {stage_name} for bucket {bucket_name}")
         snowflake_client.execute_sql(create_stage_sql)
-        logger.info(f"Successfully created S3 stage {stage_name}")
+        logger.info(f"[STEP_COMPLETE] S3 STAGE SETUP - Successfully created S3 stage {stage_name}")
     except Exception as e:
-        logger.error(f"Failed to create S3 stage {stage_name}: {e}")
+        logger.error(f"[STEP_FAILED] S3 STAGE SETUP - Failed to create S3 stage {stage_name}: {e}")
         raise
 
 
@@ -68,12 +68,12 @@ def load_s3_to_staging(
     """
     
     try:
-        logger.info(f"Loading {s3_file_path} into {staging_table}")
+        logger.info(f"[STEP] S3 TO STAGING - Loading {s3_file_path} into {staging_table}")
         rows_affected = snowflake_client.execute_sql(copy_sql)
-        logger.info(f"Successfully loaded {rows_affected} rows from {s3_file_path}")
+        logger.info(f"[STEP_COMPLETE] S3 TO STAGING - Successfully loaded {rows_affected} rows from {s3_file_path}")
         return rows_affected or 0
     except Exception as e:
-        logger.error(f"Failed to load {s3_file_path} into {staging_table}: {e}")
+        logger.error(f"[STEP_FAILED] S3 TO STAGING - Failed to load {s3_file_path} into {staging_table}: {e}")
         raise
 
 
@@ -130,12 +130,12 @@ def load_s3_files_to_staging_pipeline(
             result["rows_loaded"] = rows_loaded
             result["success"] = True
         except Exception as e:
-            logger.error(f"Failed to process file {s3_file_path}: {e}")
+            logger.error(f"[PIPELINE_FAILED] S3 TO SNOWFLAKE - Failed to process file {s3_file_path}: {e}")
         
         
     except Exception as e:
         result["error"] = str(e)
-        logger.error(f"Pipeline failed: {e}")
+        logger.error(f"[PIPELINE_FAILED] S3 TO SNOWFLAKE - Pipeline failed: {e}")
         raise
     
     finally:

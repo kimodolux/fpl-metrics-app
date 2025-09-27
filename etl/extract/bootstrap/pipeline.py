@@ -15,10 +15,11 @@ class BootstrapETLPipelineExtract:
         """Execute the bootstrap ETL pipeline"""
         try:
             # Step 1: Fetch bootstrap data from FPL API
-            logger.info("Fetching bootstrap data from FPL API...")
+            logger.info("[STEP] BOOTSTRAP EXTRACT - Fetching bootstrap data from FPL API")
             bootstrap_data = self.api_client.get_bootstrap_data()
             
             if bootstrap_data is None:
+                logger.error("[STEP_FAILED] BOOTSTRAP EXTRACT - Failed to fetch bootstrap data from FPL API")
                 return {
                     "success": False,
                     "error": "Failed to fetch bootstrap data from FPL API"
@@ -29,7 +30,7 @@ class BootstrapETLPipelineExtract:
             filename = f"bootstrap_{now.strftime('%Y%m%d')}.json"
             
             # Step 3: Save to S3 (S3DataLake will handle enrichment with timestamps)
-            logger.info(f"Saving bootstrap data to S3 with filename: {filename}")
+            logger.info(f"[STEP] BOOTSTRAP EXTRACT - Saving bootstrap data to S3 with filename: {filename}")
             s3_path = self.s3_client.save_json(bootstrap_data, "bootstrap", filename)
             
             # Step 4: Calculate success metrics
@@ -37,9 +38,8 @@ class BootstrapETLPipelineExtract:
             teams_count = len(bootstrap_data.get("teams", []))
             gameweeks_count = len(bootstrap_data.get("events", []))
             
-            logger.info(f"Bootstrap ETL completed successfully.")
-            logger.info(f"Players: {players_count}, Teams: {teams_count}, Gameweeks: {gameweeks_count}")
-            logger.info(f"S3 path: {s3_path}")
+            logger.info(f"[STEP_COMPLETE] BOOTSTRAP EXTRACT - Data processing completed - Players: {players_count}, Teams: {teams_count}, Gameweeks: {gameweeks_count}")
+            logger.info(f"[STEP_COMPLETE] BOOTSTRAP EXTRACT - S3 upload completed - Path: {s3_path}")
             
             return {
                 "success": True,
@@ -52,7 +52,7 @@ class BootstrapETLPipelineExtract:
             }
             
         except Exception as e:
-            logger.error(f"Bootstrap ETL pipeline failed: {str(e)}")
+            logger.error(f"[PIPELINE_FAILED] BOOTSTRAP EXTRACT - {str(e)}")
             return {
                 "success": False,
                 "error": str(e)

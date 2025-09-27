@@ -14,18 +14,18 @@ logger = logging.getLogger(__name__)
 
 def run_daily_load_pipelines():
     """Run all load pipelines in sequence."""
-    logger.info("Starting bootstrap staging pipeline...")
+    logger.info("[PIPELINE_START] DAILY STAGE LOAD - Starting transfer history staging pipeline")
     
     try:
         result = run_bootstrap_staging()
         if result.get("success", False):
-            logger.info(f"✅ Bootstrap staging completed successfully - Rows loaded: {result.get('rows_loaded', 0)}")
+            logger.info(f"[PIPELINE_COMPLETE] TRANSFER HISTORY STAGING - Completed successfully - Rows loaded: {result.get('rows_loaded', 0)}")
         else:
-            logger.error(f"❌ Bootstrap staging failed - Error: {result.get('error', 'Unknown error')}")
-        logger.info(f"Pipeline result: {result}")
+            logger.error(f"[PIPELINE_FAILED] TRANSFER HISTORY STAGING - {result.get('error', 'Unknown error')}")
+        logger.info(f"[STEP_COMPLETE] TRANSFER HISTORY STAGING - Pipeline result: {result}")
 
     except Exception as e:
-        logger.error(f"❌ Bootstrap staging pipeline failed with exception: {e}")
+        logger.error(f"[PIPELINE_FAILED] TRANSFER HISTORY STAGING - Exception: {e}")
         raise
 
 

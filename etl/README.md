@@ -1,7 +1,7 @@
 # ETLs
 
 ## Daily
-Bootstrap data inserted into snowflake.
+Bootstrap data appended into snowflake.
 
 ### Process:
 1. API fetches bootstrap data and saves to S3 as a compressed JSON

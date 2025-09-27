@@ -31,57 +31,63 @@ def setup_logging(log_level: str) -> None:
 def run_extract_phase(schedule: str) -> Dict[str, Any]:
     """Run the extract phase for the specified schedule."""
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting {schedule} extract phase...")
+    logger.info(f"[PHASE_START] {schedule.upper()} EXTRACT PHASE - Starting")
     
     try:
         if schedule == "daily":
             run_daily_extract_pipelines()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} EXTRACT PHASE - Completed successfully")
             return {"success": True, "phase": "extract", "schedule": "daily"}
         elif schedule == "weekly":
             run_weekly_extract_pipelines()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} EXTRACT PHASE - Completed successfully")
             return {"success": True, "phase": "extract", "schedule": "weekly"}
         else:
             raise ValueError(f"Unknown schedule: {schedule}")
     except Exception as e:
-        logger.error(f"Extract phase failed: {str(e)}")
+        logger.error(f"[PHASE_FAILED] {schedule.upper()} EXTRACT PHASE - {str(e)}")
         return {"success": False, "error": str(e), "phase": "extract", "schedule": schedule}
 
 
 def run_source_phase(schedule: str) -> Dict[str, Any]:
     """Run the source load phase for the specified schedule."""
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting {schedule} source load phase...")
+    logger.info(f"[PHASE_START] {schedule.upper()} SOURCE PHASE - Starting")
     
     try:
         if schedule == "daily":
             run_daily_source_load()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} SOURCE PHASE - Completed successfully")
             return {"success": True, "phase": "source", "schedule": "daily"}
         elif schedule == "weekly":
             run_weekly_source_load()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} SOURCE PHASE - Completed successfully")
             return {"success": True, "phase": "source", "schedule": "weekly"}
         else:
             raise ValueError(f"Unknown schedule: {schedule}")
     except Exception as e:
-        logger.error(f"Source load phase failed: {str(e)}")
+        logger.error(f"[PHASE_FAILED] {schedule.upper()} SOURCE PHASE - {str(e)}")
         return {"success": False, "error": str(e), "phase": "source", "schedule": schedule}
 
 
 def run_stage_phase(schedule: str) -> Dict[str, Any]:
     """Run the stage load phase for the specified schedule."""
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting {schedule} stage load phase...")
+    logger.info(f"[PHASE_START] {schedule.upper()} STAGE PHASE - Starting")
     
     try:
         if schedule == "daily":
             run_daily_stage_load()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} STAGE PHASE - Completed successfully")
             return {"success": True, "phase": "stage", "schedule": "daily"}
         elif schedule == "weekly":
             run_weekly_stage_load()
+            logger.info(f"[PHASE_COMPLETE] {schedule.upper()} STAGE PHASE - Completed successfully")
             return {"success": True, "phase": "stage", "schedule": "weekly"}
         else:
             raise ValueError(f"Unknown schedule: {schedule}")
     except Exception as e:
-        logger.error(f"Stage load phase failed: {str(e)}")
+        logger.error(f"[PHASE_FAILED] {schedule.upper()} STAGE PHASE - {str(e)}")
         return {"success": False, "error": str(e), "phase": "stage", "schedule": schedule}
 
 
@@ -91,14 +97,14 @@ def run_pipeline(schedule: str, phase: str) -> int:
     
     phases_to_run = []
     if phase == "all":
-        phases_to_run = ["extract", "source", "stage"]
+        phases_to_run = ["extract", "stage", "source"]
     else:
         phases_to_run = [phase]
     
     results = []
     
     for current_phase in phases_to_run:
-        logger.info(f"Executing {current_phase} phase for {schedule} schedule")
+        logger.info(f"[PIPELINE_START] {current_phase.upper()} - Starting for {schedule} schedule")
         
         if current_phase == "extract":
             result = run_extract_phase(schedule)
@@ -113,12 +119,12 @@ def run_pipeline(schedule: str, phase: str) -> int:
         results.append(result)
         
         if not result.get("success", False):
-            logger.error(f"Phase {current_phase} failed, stopping pipeline")
+            logger.error(f"[PIPELINE_FAILED] {current_phase.upper()} - Failed, stopping pipeline")
             return 1
-        
-        logger.info(f"Phase {current_phase} completed successfully")
+
+        logger.info(f"[PIPELINE_COMPLETE] {current_phase.upper()} - Completed successfully")
     
-    logger.info(f"All phases completed successfully for {schedule} schedule")
+    logger.info(f"[PIPELINE_COMPLETE] ALL PHASES - Completed successfully for {schedule.upper()} schedule")
     return 0
 
 
@@ -173,20 +179,20 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "error": error_msg
             }
         
-        logger.info(f"Starting FPL ETL Pipeline via Lambda - Schedule: {schedule}, Phase: {phase}")
+        logger.info(f"[PIPELINE_START] FPL ETL LAMBDA - Schedule: {schedule.upper()}, Phase: {phase.upper()}")
         
         # Run the pipeline
         exit_code = run_pipeline(schedule, phase)
-        
+
         if exit_code == 0:
-            logger.info("Pipeline completed successfully")
+            logger.info(f"[PIPELINE_COMPLETE] FPL ETL LAMBDA - Completed successfully")
             return {
                 "statusCode": 200,
                 "success": True,
                 "message": f"Pipeline completed successfully for schedule '{schedule}' and phase '{phase}'"
             }
         else:
-            logger.error("Pipeline failed")
+            logger.error(f"[PIPELINE_FAILED] FPL ETL LAMBDA - Pipeline failed")
             return {
                 "statusCode": 500,
                 "success": False,
@@ -244,21 +250,21 @@ Examples:
     setup_logging(args.log_level)
     
     logger = logging.getLogger(__name__)
-    logger.info(f"Starting FPL ETL Pipeline - Schedule: {args.schedule}, Phase: {args.phase}")
+    logger.info(f"[PIPELINE_START] FPL ETL - Schedule: {args.schedule.upper()}, Phase: {args.phase.upper()}")
     
     try:
         exit_code = run_pipeline(args.schedule, args.phase)
         if exit_code == 0:
-            logger.info("Pipeline completed successfully")
+            logger.info(f"[PIPELINE_COMPLETE] FPL ETL - Completed successfully")
         else:
-            logger.error("Pipeline failed")
+            logger.error(f"[PIPELINE_FAILED] FPL ETL - Pipeline failed")
         return exit_code
         
     except KeyboardInterrupt:
-        logger.warning("Pipeline interrupted by user")
+        logger.warning("[PIPELINE_INTERRUPTED] FPL ETL - Pipeline interrupted by user")
         return 130
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(f"[PIPELINE_FAILED] FPL ETL - Unexpected error: {str(e)}")
         return 1
 
 
