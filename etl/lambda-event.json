@@ -1,0 +1,7 @@
+{
+  "detail": {
+    "schedule": "daily"
+  },
+  "source": "aws.events",
+  "detail-type": "Scheduled Event"
+}
