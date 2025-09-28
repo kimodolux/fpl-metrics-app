@@ -1,5 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.11
 
+# Install zip utility
+RUN dnf install -y zip
+
 # First install packages that don't require compilation
 COPY lambda-package/requirements.txt /tmp/
 RUN pip install --no-cache-dir \
