@@ -1,7 +1,12 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install zip utility
-RUN dnf install -y zip
+# Install commonly needed utilities for Lambda deployment
+RUN yum update -y && yum install -y \
+    zip \
+    unzip \
+    curl \
+    wget \
+    && yum clean all
 
 # First install packages that don't require compilation
 COPY lambda-package/requirements.txt /tmp/
