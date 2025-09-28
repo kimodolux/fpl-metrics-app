@@ -13,7 +13,7 @@ def run_fixtures_staging():
     return load_s3_files_to_staging_pipeline(
         staging_table_sql_file="load/stage/fixtures/create_fixtures_staging.sql",
         staging_table_name="STAGING_FIXTURES",
-        s3_file_path=f"fpl-data/fixtures/fixtures_{now.strftime("%Y%m%d")}.json.gz",
+        s3_file_path=f"fpl-data/fixtures/fixtures_{now.strftime('%Y%m%d')}.json.gz",
         stage_name="fpl_s3_stage",
         bucket_name="fpl-stats-data-lake-dev"
     )

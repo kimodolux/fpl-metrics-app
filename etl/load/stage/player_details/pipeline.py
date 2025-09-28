@@ -13,7 +13,7 @@ def run_player_details_staging():
     return load_s3_files_to_staging_pipeline(
         staging_table_sql_file="load/stage/player_details/create_player_details_staging.sql",
         staging_table_name="STAGING_PLAYER_DETAILS",
-        s3_file_path=f"fpl-data/player_details/player_details_{now.strftime("%Y%m%d")}.json.gz",
+        s3_file_path=f"fpl-data/player_details/player_details_{now.strftime('%Y%m%d')}.json.gz",
         stage_name="fpl_s3_stage",
         bucket_name="fpl-stats-data-lake-dev"
     )
