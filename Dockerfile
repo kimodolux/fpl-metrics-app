@@ -1,18 +1,15 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Copy requirements and install dependencies
+# Copy requirements and install dependencies with only binary wheels
 COPY lambda-package/requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt -t /var/task/
-
-# Install cryptography and other binary packages with correct architecture
-RUN pip install --platform linux_x86_64 \
+RUN pip install --no-cache-dir \
+    --only-binary=:all: \
+    --platform linux_x86_64 \
     --target /var/task/ \
     --implementation cp \
     --python-version 3.11 \
-    --only-binary=:all: \
     --upgrade \
-    --force-reinstall \
-    cryptography==3.4.8 cffi
+    -r /tmp/requirements.txt
 
 # Copy source code
 COPY lambda-package/ /var/task/
