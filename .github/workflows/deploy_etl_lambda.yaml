@@ -48,9 +48,9 @@ jobs:
       run: |
         # Build the Docker image and extract the package
         docker build -t lambda-builder .
-        
-        # Run container and copy the zip file
-        docker run --name lambda-container lambda-builder
+
+        # Create container without running it and copy the zip file
+        docker create --name lambda-container lambda-builder
         docker cp lambda-container:/tmp/lambda-deployment.zip ./lambda-deployment.zip
         docker rm lambda-container
     
