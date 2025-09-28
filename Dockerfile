@@ -1,15 +1,20 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Copy requirements and install dependencies with only binary wheels
+# First install packages that don't require compilation
 COPY lambda-package/requirements.txt /tmp/
 RUN pip install --no-cache-dir \
-    --only-binary=:all: \
-    --platform linux_x86_64 \
     --target /var/task/ \
-    --implementation cp \
-    --python-version 3.11 \
-    --upgrade \
-    -r /tmp/requirements.txt
+    boto3 requests python-dotenv pyarrow==15.0.2
+
+# Install snowflake-connector-python and its dependencies
+RUN pip install --no-cache-dir \
+    --target /var/task/ \
+    snowflake-connector-python==3.7.0
+
+# Install cryptography with specific compatible version for Lambda
+RUN pip install --no-cache-dir \
+    --target /var/task/ \
+    cryptography==3.4.8
 
 # Copy source code
 COPY lambda-package/ /var/task/
