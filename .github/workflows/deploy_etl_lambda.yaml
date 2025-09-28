@@ -3,7 +3,6 @@ name: Deploy Lambda Function
 on:
   push:
     branches: master
-  
 
 jobs:
   deploy:
@@ -21,30 +20,46 @@ jobs:
     - name: Set up Python
       run: uv python install 3.11
     
-    - name: Install dependencies and create package
+    - name: Prepare source code
+      run: |
+        cd etl
+        mkdir -p ../lambda-package
+        
+        # Copy only necessary Python files, exclude development/test files
+        find . -name "*.py" \
+          -not -path "./.venv/*" \
+          -not -path "./tests/*" \
+          -not -name "*test*.py" \
+          -exec cp --parents {} ../lambda-package/ \;
+        
+        # Copy other necessary files (config, etc.)
+        find . -name "*.json" -o -name "*.yaml" -o -name "*.yml" \
+          -not -path "./.venv/*" \
+          -not -path "./tests/*" \
+          -exec cp --parents {} ../lambda-package/ \; 2>/dev/null || true
+    
+    - name: Generate requirements.txt
       run: |
         cd etl
         uv sync --frozen
-        mkdir -p ../package
-        uv pip compile pyproject.toml --output-file ../package/requirements.txt
-        pip install -r ../package/requirements.txt -t ../package
-        
-        # Copy only necessary files, exclude development/test files
-        find . -name "*.py" -not -path "./.venv/*" -not -path "./tests/*" -not -name "*test*.py" -exec cp --parents {} ../package/ \;
-        
-        # Remove unnecessary files to reduce package size
-        cd ../package
-        find . -type f -name "*.pyc" -delete
-        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-        find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
-        find . -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
-        find . -type f -name "*.so" -delete 2>/dev/null || true
-        find . -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+        uv pip compile pyproject.toml --output-file ../lambda-package/requirements.txt
     
-    - name: Create deployment package
+    - name: Build Lambda-compatible package with Docker
       run: |
-        cd package
-        zip -r ../lambda-deployment.zip .
+        # Build the Docker image and extract the package
+        docker build -t lambda-builder .
+        
+        # Run container and copy the zip file
+        docker run --name lambda-container lambda-builder
+        docker cp lambda-container:/tmp/lambda-deployment.zip ./lambda-deployment.zip
+        docker rm lambda-container
+    
+    - name: Verify package contents (optional)
+      run: |
+        echo "Package size:"
+        ls -lh lambda-deployment.zip
+        echo "Package contents (first 20 files):"
+        unzip -l lambda-deployment.zip | head -20
     
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
