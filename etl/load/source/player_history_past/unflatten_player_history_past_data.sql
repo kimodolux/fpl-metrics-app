@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_PLAYER_HISTORY_PAST (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_PLAYER_HISTORY_PAST (
     season_name,
     element_code,
     start_cost,
@@ -61,6 +61,6 @@ SELECT
     player_data.key::INTEGER as player_id,
     extraction_timestamp,
     extraction_date
-FROM STAGING_PLAYER_DETAILS,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_PLAYER_DETAILS,
 LATERAL FLATTEN(input => raw_data) as player_data,
 LATERAL FLATTEN(input => player_data.value:history_past) as history;

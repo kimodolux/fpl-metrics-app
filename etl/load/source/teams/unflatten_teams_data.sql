@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_TEAMS (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_TEAMS (
     team_id,
     code,
     draw,
@@ -47,5 +47,5 @@ SELECT
     team.value:pulse_id::INTEGER as pulse_id,
     extraction_timestamp,
     extraction_date
-FROM STAGING_BOOTSTRAP,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_BOOTSTRAP,
 LATERAL FLATTEN(input => raw_data:teams) as team;

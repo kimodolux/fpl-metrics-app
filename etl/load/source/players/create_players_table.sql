@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS SOURCE_PLAYERS (
+CREATE TABLE IF NOT EXISTS FPL_STATS.FPL_SCHEMA.SOURCE_PLAYERS (
     player_id INTEGER PRIMARY KEY,
     chance_of_playing_next_round INTEGER,
     chance_of_playing_this_round INTEGER,

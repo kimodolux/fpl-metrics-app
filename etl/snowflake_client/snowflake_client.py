@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 from typing import Dict, Any, Optional, List
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 
 
 logger = logging.getLogger(__name__)
@@ -29,11 +30,14 @@ def get_secret(parameter_name):
     )
     return response['Parameter']['Value']
 
-def load_private_key_from_content(private_key_content: str, passphrase: Optional[str] = None) -> bytes:
+def load_private_key_from_content(private_key_content: str) -> bytes:
     """Load and return the private key for Snowflake key-pair authentication from content"""
+    private_key_content = private_key_content.replace('\\n', '\n')
+    
     private_key = serialization.load_pem_private_key(
         private_key_content.encode(),
-        password=passphrase.encode() if passphrase else None,
+        password=None,
+        backend=default_backend()
     )
     
     return private_key.private_bytes(
@@ -195,8 +199,8 @@ class SnowflakeClient:
             format_clause = f"FILE_FORMAT = ({format_options})"
         
         copy_sql = f"""
-        COPY INTO {table_name}
-        FROM @{stage_path}
+        COPY INTO FPL_STATS.FPL_SCHEMA.{table_name}
+        FROM @FPL_STATS.FPL_SCHEMA.{stage_path}
         {format_clause}
         """
         
@@ -205,7 +209,7 @@ class SnowflakeClient:
     
     def get_row_count(self, table_name: str, where_clause: Optional[str] = None) -> int:
         """Get row count from a table with optional WHERE clause"""
-        sql = f"SELECT COUNT(*) FROM {table_name}"
+        sql = f"SELECT COUNT(*) FROM FPL_STATS.FPL_SCHEMA.{table_name}"
         if where_clause:
             sql += f" WHERE {where_clause}"
         
@@ -214,7 +218,7 @@ class SnowflakeClient:
     
     def truncate_table(self, table_name: str) -> None:
         """Truncate a table"""
-        sql = f"TRUNCATE TABLE {table_name}"
+        sql = f"TRUNCATE TABLE FPL_STATS.FPL_SCHEMA.{table_name}"
         logger.info(f"Truncating table: {table_name}")
         self.execute_sql(sql)
     

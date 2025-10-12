@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_FIXTURES (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_FIXTURES (
     fixture_id,
     code,
     event,
@@ -39,5 +39,5 @@ SELECT
     fixture.value:pulse_id::INTEGER as pulse_id,
     extraction_timestamp,
     extraction_date
-FROM STAGING_FIXTURES,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_FIXTURES,
 LATERAL FLATTEN(input => raw_data:fixtures) as fixture;

@@ -29,7 +29,7 @@ def create_s3_stage(
     format_clause = " ".join([f"{k} = {v}" for k, v in format_options.items()])
     
     create_stage_sql = f"""
-    CREATE OR REPLACE STAGE {stage_name}
+    CREATE OR REPLACE STAGE FPL_STATS.FPL_SCHEMA.{stage_name}
     URL = 's3://{bucket_name}/'
     CREDENTIALS = (
         AWS_KEY_ID = '{s3config.aws_access_key_id}'
@@ -56,14 +56,14 @@ def load_s3_to_staging(
     """Load raw JSON from S3 into staging table"""
 
     copy_sql = f"""
-    COPY INTO {staging_table} (raw_data, extraction_timestamp, extraction_date, s3_file_path)
+    COPY INTO FPL_STATS.FPL_SCHEMA.{staging_table} (raw_data, extraction_timestamp, extraction_date, s3_file_path)
     FROM (
-        SELECT 
+        SELECT
             parse_json($1),
             to_timestamp($1:extraction_timestamp),
             to_date($1:extraction_date),
             '{s3_file_path}'
-        FROM @{stage_name}/{s3_file_path}
+        FROM @FPL_STATS.FPL_SCHEMA.{stage_name}/{s3_file_path}
     )
     """
     

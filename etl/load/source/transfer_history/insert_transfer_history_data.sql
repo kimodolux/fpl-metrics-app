@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_TRANSFER_HISTORY (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_TRANSFER_HISTORY (
     player_id,
     date,
     now_cost,
@@ -37,10 +37,10 @@ SELECT
     player.value:value_season::FLOAT as value_season,
     extraction_timestamp,
     extraction_date
-FROM STAGING_BOOTSTRAP,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_BOOTSTRAP,
 LATERAL FLATTEN(input => raw_data:elements) as player
 WHERE NOT EXISTS (
-    SELECT 1 FROM SOURCE_TRANSFER_HISTORY 
+    SELECT 1 FROM FPL_STATS.FPL_SCHEMA.SOURCE_TRANSFER_HISTORY 
     WHERE player_id = player.value:id::INTEGER 
-    AND extraction_date = STAGING_BOOTSTRAP.extraction_date
+    AND extraction_date = FPL_STATS.FPL_SCHEMA.STAGING_BOOTSTRAP.extraction_date
 );

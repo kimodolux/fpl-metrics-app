@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_EVENTS (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_EVENTS (
     event_id,
     name,
     deadline_time,
@@ -55,5 +55,5 @@ SELECT
     event.value:ranked_count::INTEGER as ranked_count,
     extraction_timestamp,
     extraction_date
-FROM STAGING_BOOTSTRAP,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_BOOTSTRAP,
 LATERAL FLATTEN(input => raw_data:events) as event;

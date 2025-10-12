@@ -1,4 +1,4 @@
-INSERT INTO SOURCE_PLAYERS (
+INSERT INTO FPL_STATS.FPL_SCHEMA.SOURCE_PLAYERS (
     player_id,
     chance_of_playing_next_round,
     chance_of_playing_this_round,
@@ -183,5 +183,5 @@ SELECT
     player.value:clean_sheets_per_90::FLOAT as clean_sheets_per_90,
     extraction_timestamp,
     extraction_date
-FROM STAGING_BOOTSTRAP,
+FROM FPL_STATS.FPL_SCHEMA.STAGING_BOOTSTRAP,
 LATERAL FLATTEN(input => raw_data:elements) as player;
