@@ -13,9 +13,8 @@ def run_standings_source():
     """
     Execute standings dimension table creation and calculation pipeline
 
-    1. Create DIM_STANDINGS table
-    2. Truncate existing data
-    3. Calculate standings from SOURCE_FIXTURES and SOURCE_TEAMS
+    1. Create/Replace DIM_STANDINGS table
+    2. Calculate standings from SOURCE_FIXTURES and SOURCE_TEAMS
     """
 
     snowflake_client = None
@@ -29,15 +28,11 @@ def run_standings_source():
         # Initialize Snowflake client
         snowflake_client = SnowflakeClient()
 
-        # Step 1: Create DIM_STANDINGS table
-        logger.info("Creating DIM_STANDINGS table")
+        # Step 1: Create/Replace DIM_STANDINGS table (drops and recreates)
+        logger.info("Creating/Replacing DIM_STANDINGS table")
         snowflake_client.execute_sql_file("load/source/standings/create_dim_standings.sql")
 
-        # Step 2: Clear existing data
-        logger.info("Truncating DIM_STANDINGS table")
-        snowflake_client.truncate_table("DIM_STANDINGS")
-
-        # Step 3: Calculate standings from fixtures and teams
+        # Step 2: Calculate standings from fixtures and teams
         logger.info("Calculating standings from SOURCE_FIXTURES and SOURCE_TEAMS")
         rows_affected = snowflake_client.execute_sql_file("load/source/standings/calculate_standings.sql")
 
