@@ -12,6 +12,7 @@ from load.source.player_history.pipeline import run_player_history_source
 from load.source.players.pipeline import run_players_source
 from load.source.teams.pipeline import run_teams_source
 from load.source.transfer_history.pipeline import run_transfer_history_source
+from load.source.standings.pipeline import run_standings_source
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -94,9 +95,22 @@ def run_weekly_load_pipelines():
         else:
             logger.error(f"❌ Teams source failed - Error: {result.get('error', 'Unknown error')}")
         logger.info(f"Pipeline result: {result}")
-    
+
     except Exception as e:
         logger.error(f"❌ Teams source pipeline failed with exception: {e}")
+        raise
+
+    logger.info("Starting standings source pipeline...")
+    try:
+        result = run_standings_source()
+        if result.get("success", False):
+            logger.info(f"✅ Standings source completed successfully - Rows loaded: {result.get('rows_loaded', 0)}")
+        else:
+            logger.error(f"❌ Standings source failed - Error: {result.get('error', 'Unknown error')}")
+        logger.info(f"Pipeline result: {result}")
+
+    except Exception as e:
+        logger.error(f"❌ Standings source pipeline failed with exception: {e}")
         raise
 
     logger.info("Starting transfer history source pipeline...")
@@ -107,7 +121,7 @@ def run_weekly_load_pipelines():
         else:
             logger.error(f"❌ Transfer history source failed - Error: {result.get('error', 'Unknown error')}")
         logger.info(f"Pipeline result: {result}")
-    
+
     except Exception as e:
         logger.error(f"❌ Transfer history source pipeline failed with exception: {e}")
         raise

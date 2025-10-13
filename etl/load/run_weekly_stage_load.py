@@ -49,7 +49,7 @@ def run_weekly_load_pipelines():
         else:
             logger.error(f"❌ Player details staging failed - Error: {result.get('error', 'Unknown error')}")
         logger.info(f"Pipeline result: {result}")
-    
+
     except Exception as e:
         logger.error(f"❌ Player details staging pipeline failed with exception: {e}")
         raise
