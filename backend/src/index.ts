@@ -5,6 +5,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "@/routes/auth";
 import userRoutes from "@/routes/users";
+import teamsRoutes from "@/routes/teams";
+import managerRoutes from "@/routes/manager";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +33,12 @@ app.use("/api/v1/auth", authRoutes);
 
 // User routes
 app.use("/api/v1/users", userRoutes);
+
+// Teams routes
+app.use("/api/v1/teams", teamsRoutes);
+
+// Manager routes
+app.use("/api/v1/manager", managerRoutes);
 
 // 404 handler
 app.use("*", (_req, res) => {

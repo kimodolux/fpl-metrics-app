@@ -4,6 +4,8 @@ import { useAuthStore } from './stores/authStore';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Dashboard } from './components/Dashboard';
+import { Teams } from './components/Teams';
+import { Manager } from './components/Manager';
 import { PrivateRoute } from './components/PrivateRoute';
 
 function App() {
@@ -24,6 +26,22 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/teams"
+            element={
+              <PrivateRoute>
+                <Teams />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/manager/:managerId"
+            element={
+              <PrivateRoute>
+                <Manager />
               </PrivateRoute>
             }
           />

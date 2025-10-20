@@ -1,1 +1,0 @@
-{"errorMessage": "Syntax error in module 'main': f-string: unmatched '(' (pipeline.py, line 16)", "errorType": "Runtime.UserCodeSyntaxError", "requestId": "", "stackTrace": ["  File \"/var/task/load/stage/bootstrap/pipeline.py\" Line 16\n            s3_file_path=f\"fpl-data/bootstrap/bootstrap_{now.strftime(\"%Y%m%d\")}.json.gz\",\n"]}

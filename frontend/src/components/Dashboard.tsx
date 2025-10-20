@@ -1,4 +1,5 @@
 import { useAuthStore } from '../stores/authStore';
+import { Link } from 'react-router-dom';
 
 export const Dashboard = () => {
   const { user, logout } = useAuthStore();
@@ -46,6 +47,21 @@ export const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Teams
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    View all Premier League teams and their statistics
+                  </p>
+                  <Link
+                    to="/teams"
+                    className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md text-sm hover:bg-primary-700"
+                  >
+                    View Teams
+                  </Link>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Player Analytics
                   </h3>
                   <p className="text-gray-600 text-sm">
@@ -55,19 +71,7 @@ export const Dashboard = () => {
                     Coming Soon
                   </button>
                 </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Team Builder
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Create and manage your fantasy teams
-                  </p>
-                  <button className="mt-4 bg-primary-600 text-white px-4 py-2 rounded-md text-sm hover:bg-primary-700">
-                    Coming Soon
-                  </button>
-                </div>
-                
+
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Player Comparison
