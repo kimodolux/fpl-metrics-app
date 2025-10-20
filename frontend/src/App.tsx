@@ -5,6 +5,7 @@ import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Dashboard } from './components/Dashboard';
 import { Teams } from './components/Teams';
+import { Players } from './components/Players';
 import { Manager } from './components/Manager';
 import { PrivateRoute } from './components/PrivateRoute';
 
@@ -34,6 +35,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Teams />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/players"
+            element={
+              <PrivateRoute>
+                <Players />
               </PrivateRoute>
             }
           />

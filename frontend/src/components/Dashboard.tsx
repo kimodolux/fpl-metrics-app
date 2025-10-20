@@ -67,9 +67,12 @@ export const Dashboard = () => {
                   <p className="text-gray-600 text-sm">
                     Analyze player performance and statistics
                   </p>
-                  <button className="mt-4 bg-primary-600 text-white px-4 py-2 rounded-md text-sm hover:bg-primary-700">
-                    Coming Soon
-                  </button>
+                  <Link
+                    to="/players"
+                    className="mt-4 inline-block bg-primary-600 text-white px-4 py-2 rounded-md text-sm hover:bg-primary-700"
+                  >
+                    View Players
+                  </Link>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow">

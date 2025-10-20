@@ -7,6 +7,7 @@ import authRoutes from "@/routes/auth";
 import userRoutes from "@/routes/users";
 import teamsRoutes from "@/routes/teams";
 import managerRoutes from "@/routes/manager";
+import playersRoutes from "@/routes/players";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +40,9 @@ app.use("/api/v1/teams", teamsRoutes);
 
 // Manager routes
 app.use("/api/v1/manager", managerRoutes);
+
+// Players routes
+app.use("/api/v1/players", playersRoutes);
 
 // 404 handler
 app.use("*", (_req, res) => {

@@ -7,6 +7,7 @@ interface SnowflakeConfig {
   database: string;
   warehouse: string;
   schema?: string;
+  role?: string;
 }
 
 class SnowflakeClient {
@@ -21,6 +22,7 @@ class SnowflakeClient {
       database: process.env.SNOWFLAKE_DATABASE || "",
       warehouse: process.env.SNOWFLAKE_WAREHOUSE || "",
       schema: process.env.SNOWFLAKE_SCHEMA || "PUBLIC",
+      role: process.env.SNOWFLAKE_ROLE,
     };
   }
 

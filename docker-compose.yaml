@@ -28,6 +28,13 @@ services:
       JWT_SECRET: your-jwt-secret-key
       NODE_ENV: development
       PORT: 3001
+      SNOWFLAKE_ACCOUNT: IVGPXQI-YE27103
+      SNOWFLAKE_USER: FPL_ETL_DEV_READ_USER
+      SNOWFLAKE_PASSWORD: gnp1guf7ptx2ZPK!wra
+      SNOWFLAKE_WAREHOUSE: FPL_ETL_DEV_WAREHOUSE
+      SNOWFLAKE_DATABASE: FPL_STATS
+      SNOWFLAKE_SCHEMA: FPL_SCHEMA
+      SNOWFLAKE_ROLE: SNOWFLAKE_READ_ROLE
     ports:
       - "3001:3001"
     depends_on:
@@ -36,7 +43,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: npm run dev
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
   frontend:
     build:
