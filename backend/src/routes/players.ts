@@ -7,7 +7,12 @@ const router = Router();
 // GET /api/v1/players
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const { team, position, minPrice, maxPrice } = req.query;
+    const { team, position, minPrice, maxPrice, page = "1", limit = "50" } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page as string, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string, 10))); // Max 100 per page
+    const offset = (pageNum - 1) * limitNum;
 
     // Build dynamic WHERE clause based on filters
     const conditions: string[] = [];
@@ -32,6 +37,16 @@ router.get("/", authenticateToken, async (req, res) => {
     const whereClause = conditions.length > 0
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
+
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM SOURCE_PLAYERS
+      ${whereClause}
+    `;
+
+    const countResult = await snowflakeClient.execute(countQuery);
+    const totalCount = countResult[0]?.TOTAL || 0;
 
     // Select relevant columns for player analytics
     const query = `
@@ -73,13 +88,24 @@ router.get("/", authenticateToken, async (req, res) => {
       FROM SOURCE_PLAYERS
       ${whereClause}
       ORDER BY total_points DESC
+      LIMIT ${limitNum}
+      OFFSET ${offset}
     `;
 
     const players = await snowflakeClient.execute(query);
 
+    const totalPages = Math.ceil(totalCount / limitNum);
+
     res.status(200).json({
       data: players,
-      count: players.length,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        totalPages: totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching players:", error);
@@ -148,12 +174,12 @@ router.get("/:id", authenticateToken, async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       data: players[0],
     });
   } catch (error) {
     console.error("Error fetching player:", error);
-    res.status(500).json({
+    return res.status(500).json({
       error: {
         code: "INTERNAL_ERROR",
         message: "Failed to fetch player from Snowflake",

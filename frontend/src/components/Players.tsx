@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import type { Player } from '../types/players';
 import type { Team } from '../types/teams';
@@ -9,8 +7,16 @@ import { Position, POSITION_LABELS } from '../types/players';
 type SortField = keyof Player | null;
 type SortDirection = 'asc' | 'desc';
 
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export const Players = () => {
-  const { user, logout } = useAuthStore();
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +32,11 @@ export const Players = () => {
   const [sortField, setSortField] = useState<SortField>('TOTAL_POINTS');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -39,10 +50,16 @@ export const Players = () => {
     fetchTeams();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedTeam, selectedPosition, minPrice, maxPrice, itemsPerPage]);
+
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
         setLoading(true);
+        setError(null);
         const params = new URLSearchParams();
 
         if (selectedTeam) params.append('team', selectedTeam);
@@ -50,9 +67,13 @@ export const Players = () => {
         if (minPrice) params.append('minPrice', (parseFloat(minPrice) * 10).toString());
         if (maxPrice) params.append('maxPrice', (parseFloat(maxPrice) * 10).toString());
 
+        // Add pagination params
+        params.append('page', currentPage.toString());
+        params.append('limit', itemsPerPage.toString());
+
         const response = await api.get(`/players?${params.toString()}`);
         setPlayers(response.data.data);
-        setError(null);
+        setPagination(response.data.pagination);
       } catch (err) {
         console.error('Error fetching players:', err);
         setError('Failed to load players data');
@@ -62,11 +83,7 @@ export const Players = () => {
     };
 
     fetchPlayers();
-  }, [selectedTeam, selectedPosition, minPrice, maxPrice]);
-
-  const handleLogout = () => {
-    logout();
-  };
+  }, [selectedTeam, selectedPosition, minPrice, maxPrice, currentPage, itemsPerPage]);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -124,53 +141,8 @@ export const Players = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold text-gray-900">
-                Fantasy Football Analytics
-              </h1>
-              <div className="flex space-x-4">
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/teams"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Teams
-                </Link>
-                <Link
-                  to="/players"
-                  className="text-primary-600 hover:text-primary-700 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Players
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
-                Welcome, {user?.username}!
-              </span>
-              <button
-                onClick={handleLogout}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6">
+    <>
+      <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Player Analytics</h2>
             <p className="text-gray-600 mt-1">
               Analyze player performance and statistics
@@ -435,23 +407,116 @@ export const Players = () => {
                   </tbody>
                 </table>
               </div>
-              <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-                <p className="text-sm text-gray-700">
-                  Showing {sortedPlayers.length} player{sortedPlayers.length !== 1 ? 's' : ''}
-                </p>
-              </div>
+              {pagination && (
+                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    {/* Pagination info */}
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm text-gray-700">
+                        Showing{' '}
+                        <span className="font-medium">
+                          {((pagination.page - 1) * pagination.limit) + 1}
+                        </span>{' '}
+                        to{' '}
+                        <span className="font-medium">
+                          {Math.min(pagination.page * pagination.limit, pagination.total)}
+                        </span>{' '}
+                        of{' '}
+                        <span className="font-medium">{pagination.total}</span>{' '}
+                        players
+                      </p>
+
+                      {/* Items per page selector */}
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-700">Show:</label>
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                          className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value={25}>25</option>
+                          <option value={50}>50</option>
+                          <option value={100}>100</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Pagination controls */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={!pagination.hasPreviousPage}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        First
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={!pagination.hasPreviousPage}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+
+                      {/* Page numbers */}
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          let pageNum: number;
+
+                          if (pagination.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= pagination.totalPages - 2) {
+                            pageNum = pagination.totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 text-sm border rounded-md ${
+                                currentPage === pageNum
+                                  ? 'bg-primary-600 text-white border-primary-600'
+                                  : 'border-gray-300 hover:bg-gray-100'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={!pagination.hasNextPage}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(pagination.totalPages)}
+                        disabled={!pagination.hasNextPage}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Last
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {!loading && !error && sortedPlayers.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-600">
-                No players found matching your filters
-              </p>
-            </div>
-          )}
+      {!loading && !error && sortedPlayers.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <p className="text-gray-600">
+            No players found matching your filters
+          </p>
         </div>
-      </main>
-    </div>
+      )}
+    </>
   );
 };

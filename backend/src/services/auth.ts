@@ -9,19 +9,15 @@ export class AuthService {
   private static readonly REFRESH_TOKEN_EXPIRES_IN = 2592000; // 30 days in seconds
 
   static async register(data: RegisterInput) {
-    const { email, username, password } = data;
+    const { email, managerId, password } = data;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }],
-      },
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
-      throw new Error(
-        existingUser.email === email ? "EMAIL_EXISTS" : "USERNAME_EXISTS"
-      );
+      throw new Error("EMAIL_EXISTS");
     }
 
     // Hash password
@@ -31,13 +27,13 @@ export class AuthService {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
+        managerId,
         passwordHash,
       },
       select: {
         id: true,
         email: true,
-        username: true,
+        managerId: true,
         createdAt: true,
       },
     });
@@ -65,7 +61,7 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        username: true,
+        managerId: true,
         passwordHash: true,
         isActive: true,
       },
@@ -107,7 +103,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        username: user.username,
+        managerId: user.managerId,
       },
       accessToken,
       refreshToken: rememberMe ? refreshToken : undefined,
@@ -138,7 +134,7 @@ export class AuthService {
             select: {
               id: true,
               email: true,
-              username: true,
+              managerId: true,
               isActive: true,
             },
           },

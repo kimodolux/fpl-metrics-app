@@ -1,7 +1,7 @@
 export type User = {
   id: string;
   email: string;
-  username: string;
+  managerId: string;
   createdAt: string;
   teamCount?: number;
 }
@@ -21,7 +21,7 @@ export type LoginCredentials = {
 
 export type RegisterCredentials = {
   email: string;
-  username: string;
+  managerId: string;
   password: string;
 }
 

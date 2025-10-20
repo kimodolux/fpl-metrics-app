@@ -31,19 +31,6 @@ router.post("/register", async (req, res) => {
               ],
             },
           });
-        case "USERNAME_EXISTS":
-          return res.status(400).json({
-            error: {
-              code: "VALIDATION_ERROR",
-              message: "Username already exists",
-              details: [
-                {
-                  field: "username",
-                  message: "This username is already taken",
-                },
-              ],
-            },
-          });
       }
     }
 

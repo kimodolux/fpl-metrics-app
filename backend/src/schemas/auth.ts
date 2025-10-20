@@ -1,13 +1,12 @@
 import { z } from "zod";
 export const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
-  username: z
+  managerId: z
     .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(50, "Username must be less than 50 characters")
+    .min(1, "Manager ID is required")
     .regex(
-      /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores"
+      /^\d+$/,
+      "Manager ID must be a valid number"
     ),
   password: z
     .string()

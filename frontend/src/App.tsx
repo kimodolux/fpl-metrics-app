@@ -7,7 +7,9 @@ import { Dashboard } from './components/Dashboard';
 import { Teams } from './components/Teams';
 import { Players } from './components/Players';
 import { Manager } from './components/Manager';
+import { Settings } from './components/Settings';
 import { PrivateRoute } from './components/PrivateRoute';
+import { Layout } from './components/Layout';
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -26,7 +28,9 @@ function App() {
             path="/dashboard"
             element={
               <PrivateRoute>
-                <Dashboard />
+                <Layout>
+                  <Dashboard />
+                </Layout>
               </PrivateRoute>
             }
           />
@@ -34,7 +38,9 @@ function App() {
             path="/teams"
             element={
               <PrivateRoute>
-                <Teams />
+                <Layout>
+                  <Teams />
+                </Layout>
               </PrivateRoute>
             }
           />
@@ -42,7 +48,9 @@ function App() {
             path="/players"
             element={
               <PrivateRoute>
-                <Players />
+                <Layout>
+                  <Players />
+                </Layout>
               </PrivateRoute>
             }
           />
@@ -50,7 +58,19 @@ function App() {
             path="/manager/:managerId"
             element={
               <PrivateRoute>
-                <Manager />
+                <Layout>
+                  <Manager />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Settings />
+                </Layout>
               </PrivateRoute>
             }
           />

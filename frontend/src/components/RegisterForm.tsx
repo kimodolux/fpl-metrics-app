@@ -9,7 +9,7 @@ export const RegisterForm = () => {
   
   const [formData, setFormData] = useState<RegisterCredentials>({
     email: '',
-    username: '',
+    managerId: '',
     password: '',
   });
 
@@ -93,24 +93,24 @@ export const RegisterForm = () => {
             </div>
             
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
+              <label htmlFor="managerId" className="block text-sm font-medium text-gray-700">
+                Manager ID
               </label>
               <input
-                id="username"
-                name="username"
+                id="managerId"
+                name="managerId"
                 type="text"
-                autoComplete="username"
+                autoComplete="off"
                 required
-                value={formData.username}
+                value={formData.managerId}
                 onChange={handleChange}
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  fieldErrors.username ? 'border-red-300' : 'border-gray-300'
+                  fieldErrors.managerId ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm`}
-                placeholder="Choose a username"
+                placeholder="Enter your FPL Manager ID"
               />
-              {fieldErrors.username && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.username}</p>
+              {fieldErrors.managerId && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.managerId}</p>
               )}
             </div>
             

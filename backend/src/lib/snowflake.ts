@@ -47,6 +47,8 @@ class SnowflakeClient {
       await this.connect();
     }
 
+    const startTime = Date.now();
+
     return new Promise((resolve, reject) => {
       this.connection!.execute({
         sqlText,
@@ -56,6 +58,16 @@ class SnowflakeClient {
             console.error("Failed to execute statement:", err.message);
             reject(err);
           } else {
+            const executionTime = Date.now() - startTime;
+            const rowCount = rows?.length || 0;
+
+            // Get first line of query for logging (truncate if too long)
+            const queryPreview = sqlText.trim().split('\n')[0].substring(0, 80);
+
+            console.log(
+              `Snowflake query executed: ${rowCount} rows read in ${executionTime}ms | ${queryPreview}${sqlText.length > 80 ? '...' : ''}`
+            );
+
             resolve(rows as T[]);
           }
         },

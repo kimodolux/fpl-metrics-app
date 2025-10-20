@@ -22,6 +22,7 @@ type AuthActions = {
   logout: () => void;
   clearError: () => void;
   checkAuth: () => Promise<void>;
+  updateUser: (data: { managerId: string }) => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -152,6 +153,27 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             isLoading: false,
           });
+        }
+      },
+
+      updateUser: async (data: { managerId: string }) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await api.patch<User>("/users/me", data);
+
+          set({
+            user: response.data,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error: any) {
+          const apiError = error.response?.data as ApiError;
+          set({
+            isLoading: false,
+            error: apiError?.error?.message || "Failed to update user",
+          });
+          throw error;
         }
       },
     }),

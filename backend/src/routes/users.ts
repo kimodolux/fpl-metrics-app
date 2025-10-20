@@ -14,7 +14,7 @@ router.get("/me", authenticateToken, async (req, res) => {
       select: {
         id: true,
         email: true,
-        username: true,
+        managerId: true,
         createdAt: true,
         _count: {
           select: {
@@ -36,7 +36,7 @@ router.get("/me", authenticateToken, async (req, res) => {
     res.status(200).json({
       id: user.id,
       email: user.email,
-      username: user.username,
+      managerId: user.managerId,
       createdAt: user.createdAt,
       teamCount: user._count.teams,
     });
@@ -56,46 +56,24 @@ router.get("/me", authenticateToken, async (req, res) => {
 router.patch("/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user!.id;
-    const { username } = req.body;
+    const { managerId } = req.body;
 
-    // Validate username if provided
-    if (username) {
-      if (
-        typeof username !== "string" ||
-        username.length < 3 ||
-        username.length > 50
-      ) {
+    // Validate managerId if provided
+    if (managerId) {
+      if (typeof managerId !== "string" || managerId.length < 1) {
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Username must be 3-50 characters long",
+            message: "Manager ID is required",
           },
         });
       }
 
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      if (!/^\d+$/.test(managerId)) {
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
-            message:
-              "Username can only contain letters, numbers, and underscores",
-          },
-        });
-      }
-
-      // Check if username is already taken
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          username,
-          id: { not: userId },
-        },
-      });
-
-      if (existingUser) {
-        return res.status(400).json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Username already taken",
+            message: "Manager ID must be a valid number",
           },
         });
       }
@@ -104,12 +82,12 @@ router.patch("/me", authenticateToken, async (req, res) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        ...(username && { username }),
+        ...(managerId && { managerId }),
       },
       select: {
         id: true,
         email: true,
-        username: true,
+        managerId: true,
         updatedAt: true,
       },
     });

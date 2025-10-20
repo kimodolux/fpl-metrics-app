@@ -34,7 +34,7 @@ export const authenticateToken = async (
       select: {
         id: true,
         email: true,
-        username: true,
+        managerId: true,
         isActive: true,
       },
     });
@@ -52,7 +52,7 @@ export const authenticateToken = async (
     req.user = {
       id: user.id,
       email: user.email,
-      username: user.username,
+      managerId: user.managerId,
     };
 
     next();
