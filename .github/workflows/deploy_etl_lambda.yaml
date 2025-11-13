@@ -51,16 +51,8 @@ jobs:
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --stack-name fpl-etl \
-            --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-              S3BucketName=${{ secrets.S3_BUCKET_NAME }} \
-              SnowflakeAccount=${{ secrets.SNOWFLAKE_ACCOUNT }} \
-              SnowflakeUser=${{ secrets.SNOWFLAKE_USER }} \
-              SnowflakePassword=${{ secrets.SNOWFLAKE_PASSWORD }} \
-              SnowflakeWarehouse=${{ secrets.SNOWFLAKE_WAREHOUSE }} \
-              SnowflakeDatabase=${{ secrets.SNOWFLAKE_DATABASE }} \
-              SnowflakeSchema=${{ secrets.SNOWFLAKE_SCHEMA }} \
-              SnowflakeRole=${{ secrets.SNOWFLAKE_ROLE }}
+            --s3-prefix fpl-etl \
+            --capabilities CAPABILITY_IAM
 
       - name: Deployment summary
         run: |

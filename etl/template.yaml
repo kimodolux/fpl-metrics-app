@@ -8,41 +8,6 @@ Parameters:
     Description: S3 bucket name for data lake
     Default: fpl-datalake
 
-  SnowflakeAccount:
-    Type: String
-    Description: Snowflake account identifier
-    NoEcho: true
-
-  SnowflakeUser:
-    Type: String
-    Description: Snowflake user
-    NoEcho: true
-
-  SnowflakePassword:
-    Type: String
-    Description: Snowflake password
-    NoEcho: true
-
-  SnowflakeWarehouse:
-    Type: String
-    Description: Snowflake warehouse
-    Default: COMPUTE_WH
-
-  SnowflakeDatabase:
-    Type: String
-    Description: Snowflake database
-    Default: FPL_STATS
-
-  SnowflakeSchema:
-    Type: String
-    Description: Snowflake schema
-    Default: RAW
-
-  SnowflakeRole:
-    Type: String
-    Description: Snowflake role
-    Default: ACCOUNTADMIN
-
 Globals:
   Function:
     Runtime: python3.13
@@ -54,13 +19,6 @@ Globals:
       Variables:
         S3_BUCKET_NAME: !Ref S3BucketName
         AWS_REGION: !Ref AWS::Region
-        SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount
-        SNOWFLAKE_USER: !Ref SnowflakeUser
-        SNOWFLAKE_PASSWORD: !Ref SnowflakePassword
-        SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
-        SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
-        SNOWFLAKE_SCHEMA: !Ref SnowflakeSchema
-        SNOWFLAKE_ROLE: !Ref SnowflakeRole
         LOG_LEVEL: INFO
 
 Resources:
@@ -101,6 +59,11 @@ Resources:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fpl-etl-daily:*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:GetParameters
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/etl/*
       RecursiveLoop: Terminate
     Metadata:
       BuildMethod: python3.13
@@ -143,6 +106,11 @@ Resources:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fpl-etl-weekly:*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:GetParameters
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/etl/*
       RecursiveLoop: Terminate
     Metadata:
       BuildMethod: python3.13
