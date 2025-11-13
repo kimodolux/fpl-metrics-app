@@ -1,45 +1,166 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: An AWS Serverless Application Model template describing your function.
+Description: FPL Stats ETL Pipeline - Daily and Weekly Lambda Functions
+
+Parameters:
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name for data lake
+    Default: fpl-datalake
+
+  SnowflakeAccount:
+    Type: String
+    Description: Snowflake account identifier
+    NoEcho: true
+
+  SnowflakeUser:
+    Type: String
+    Description: Snowflake user
+    NoEcho: true
+
+  SnowflakePassword:
+    Type: String
+    Description: Snowflake password
+    NoEcho: true
+
+  SnowflakeWarehouse:
+    Type: String
+    Description: Snowflake warehouse
+    Default: COMPUTE_WH
+
+  SnowflakeDatabase:
+    Type: String
+    Description: Snowflake database
+    Default: FPL_STATS
+
+  SnowflakeSchema:
+    Type: String
+    Description: Snowflake schema
+    Default: RAW
+
+  SnowflakeRole:
+    Type: String
+    Description: Snowflake role
+    Default: ACCOUNTADMIN
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Architectures:
+      - x86_64
+    Timeout: 900
+    MemorySize: 512
+    Environment:
+      Variables:
+        S3_BUCKET_NAME: !Ref S3BucketName
+        AWS_REGION: !Ref AWS::Region
+        SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount
+        SNOWFLAKE_USER: !Ref SnowflakeUser
+        SNOWFLAKE_PASSWORD: !Ref SnowflakePassword
+        SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
+        SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
+        SNOWFLAKE_SCHEMA: !Ref SnowflakeSchema
+        SNOWFLAKE_ROLE: !Ref SnowflakeRole
+        LOG_LEVEL: INFO
+
 Resources:
-  fpletldaily:
+  FPLETLDailyFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: fpl-etl-daily
       CodeUri: .
-      Description: ''
-      MemorySize: 128
-      Timeout: 300
+      Description: FPL Daily ETL Pipeline (Extract, Source, Stage)
       Handler: main.lambda_handler
-      Runtime: python3.13
-      Architectures:
-        - x86_64
+      Timeout: 900
+      MemorySize: 1024
       EphemeralStorage:
-        Size: 512
+        Size: 2048
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
-      PackageType: Zip
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 2 * * ? *)
+            Description: Run daily ETL at 2 AM UTC
+            Input: |
+              {
+                "detail": {
+                  "schedule": "daily",
+                  "phase": "all"
+                }
+              }
       Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref S3BucketName
         - Statement:
             - Effect: Allow
               Action:
                 - logs:CreateLogGroup
-              Resource: arn:aws:logs:us-east-1:730992369546:*
-            - Effect: Allow
-              Action:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
-              Resource:
-                - >-
-                  arn:aws:logs:us-east-1:730992369546:log-group:/aws/lambda/fpl-etl-daily:*
+              Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fpl-etl-daily:*
+      RecursiveLoop: Terminate
+    Metadata:
+      BuildMethod: python3.13
+      BuildArchitecture: x86_64
+
+  FPLETLWeeklyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fpl-etl-weekly
+      CodeUri: .
+      Description: FPL Weekly ETL Pipeline (Extract, Source, Stage)
+      Handler: main.lambda_handler
+      Timeout: 900
+      MemorySize: 2048
+      EphemeralStorage:
+        Size: 4096
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 3 ? * SUN *)
+            Description: Run weekly ETL at 3 AM UTC on Sundays
+            Input: |
+              {
+                "detail": {
+                  "schedule": "weekly",
+                  "phase": "all"
+                }
+              }
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref S3BucketName
+        - Statement:
             - Effect: Allow
               Action:
-                - ec2:CreateNetworkInterface
-                - ec2:DeleteNetworkInterface
-                - ec2:DescribeNetworkInterfaces
-              Resource: '*'
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fpl-etl-weekly:*
       RecursiveLoop: Terminate
-      SnapStart:
-        ApplyOn: None
-      RuntimeManagementConfig:
-        UpdateRuntimeOn: Auto
+    Metadata:
+      BuildMethod: python3.13
+      BuildArchitecture: x86_64
+
+Outputs:
+  FPLETLDailyFunctionArn:
+    Description: ARN of the Daily ETL Lambda Function
+    Value: !GetAtt FPLETLDailyFunction.Arn
+    Export:
+      Name: FPLETLDailyFunctionArn
+
+  FPLETLWeeklyFunctionArn:
+    Description: ARN of the Weekly ETL Lambda Function
+    Value: !GetAtt FPLETLWeeklyFunction.Arn
+    Export:
+      Name: FPLETLWeeklyFunctionArn
+
+  S3BucketName:
+    Description: S3 Bucket for FPL Data Lake
+    Value: !Ref S3BucketName

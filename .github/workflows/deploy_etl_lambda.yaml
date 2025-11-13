@@ -1,88 +1,74 @@
-name: Deploy Lambda Function
+name: Deploy Lambda Functions
 
 on:
   push:
-    branches: master
+    branches:
+      - master
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with:
-        version: "latest"
-    
-    - name: Set up Python
-      run: uv python install 3.11
-    
-    - name: Prepare source code
-      run: |
-        cd etl
-        mkdir -p ../lambda-package
-        
-        # Copy only necessary Python files, exclude development/test files
-        find . -name "*.py" \
-          -not -path "./.venv/*" \
-          -not -path "./tests/*" \
-          -not -name "*test*.py" \
-          -exec cp --parents {} ../lambda-package/ \;
-        
-        # Copy other necessary files (config, etc.)
-        find . -name "*.json" -o -name "*.yaml" -o -name "*.yml" \
-          -not -path "./.venv/*" \
-          -not -path "./tests/*" \
-          -exec cp --parents {} ../lambda-package/ \; 2>/dev/null || true
-    
-    - name: Generate requirements.txt
-      run: |
-        cd etl
-        uv sync --frozen
-        uv pip compile pyproject.toml --output-file ../lambda-package/requirements.txt
-    
-    - name: Build Lambda-compatible package with Docker
-      run: |
-        # Build the Docker image and extract the package
-        docker build -t lambda-builder .
 
-        # Create container without running it and copy the zip file
-        docker create --name lambda-container lambda-builder
-        docker cp lambda-container:/tmp/lambda-deployment.zip ./lambda-deployment.zip
-        docker rm lambda-container
-    
-    - name: Verify package contents (optional)
-      run: |
-        echo "Package size:"
-        ls -lh lambda-deployment.zip
-        echo "Package contents (first 20 files):"
-        unzip -l lambda-deployment.zip | head -20
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-    
-    - name: Upload package to S3
-      run: |
-        aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-$(date +%Y%m%d%H%M%S).zip
-        aws s3 cp lambda-deployment.zip s3://fpl-etl-lambda/lambda-deployment-latest.zip
-    
-    - name: Deploy to Lambda functions from S3
-      run: |
-        # Deploy to daily Lambda function
-        aws lambda update-function-code \
-          --function-name fpl-etl-daily \
-          --s3-bucket fpl-etl-lambda \
-          --s3-key lambda-deployment-latest.zip
-        
-        # Deploy to weekly Lambda function  
-        aws lambda update-function-code \
-          --function-name fpl-etl-weekly \
-          --s3-bucket fpl-etl-lambda \
-          --s3-key lambda-deployment-latest.zip
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Generate requirements.txt from pyproject.toml
+        run: |
+          cd etl
+          uv pip compile pyproject.toml -o requirements.txt --python-version 3.13
+
+      - name: Build Lambda functions
+        run: |
+          cd etl
+          sam build --use-container
+
+      - name: Deploy to AWS
+        run: |
+          cd etl
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name fpl-etl \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              S3BucketName=${{ secrets.S3_BUCKET_NAME }} \
+              SnowflakeAccount=${{ secrets.SNOWFLAKE_ACCOUNT }} \
+              SnowflakeUser=${{ secrets.SNOWFLAKE_USER }} \
+              SnowflakePassword=${{ secrets.SNOWFLAKE_PASSWORD }} \
+              SnowflakeWarehouse=${{ secrets.SNOWFLAKE_WAREHOUSE }} \
+              SnowflakeDatabase=${{ secrets.SNOWFLAKE_DATABASE }} \
+              SnowflakeSchema=${{ secrets.SNOWFLAKE_SCHEMA }} \
+              SnowflakeRole=${{ secrets.SNOWFLAKE_ROLE }}
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Stack Name:** fpl-etl" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ secrets.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Lambda Functions" >> $GITHUB_STEP_SUMMARY
+          echo "- **Daily ETL:** fpl-etl-daily (runs at 2 AM UTC daily)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Weekly ETL:** fpl-etl-weekly (runs at 3 AM UTC on Sundays)" >> $GITHUB_STEP_SUMMARY

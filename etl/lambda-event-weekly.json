@@ -1,6 +1,6 @@
 {
   "detail": {
-    "schedule": "daily",
+    "schedule": "weekly",
     "phase": "all"
   },
   "source": "aws.events",
